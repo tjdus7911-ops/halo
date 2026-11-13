@@ -246,6 +246,8 @@ private fun ChecksColumn(checks: List<CheckItem>, modifier: Modifier) {
 }
 
 private fun checkIcon(id: String) = when (id) {
+    "snow" -> HaloIcons.Snow
+    "battery" -> HaloIcons.Battery
     "tire" -> HaloIcons.Tire
     "wiper" -> HaloIcons.Wiper
     "washer" -> HaloIcons.Washer

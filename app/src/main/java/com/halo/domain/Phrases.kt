@@ -85,10 +85,21 @@ object Phrases {
         if (full) {
             checks.filter { it.level == CheckLevel.WARN }.forEach { c ->
                 s += when (c.id) {
+                    "snow" -> "밤사이 눈이 와서 라이트와 후미등, 센서의 눈부터 치워 주세요."
                     "tire" -> "타이어 공기압을 확인해 주세요."
                     "wiper" -> "와이퍼가 AUTO라 유리에 얼어붙지 않았는지 먼저 봐 주세요."
                     "washer" -> "워셔액이 부족해요."
+                    "battery" -> "배터리가 ${v.batteryPercent}%예요. 추운 날은 주행 가능 거리가 줄어요."
                     else -> "${josa(c.label, "을/를")} 확인해 주세요."
+                }
+            }
+            // 출발 전 자동 기능 점검: 꺼져 있으면 켜 두도록 (주행 중에 손댈 일을 미리 없앤다)
+            if (!v.isDriving) {
+                checks.filter { it.level == CheckLevel.INFO }.forEach { c ->
+                    when (c.id) {
+                        "light" -> s += "전조등을 AUTO로 두고 출발하세요."
+                        "defog" -> s += "공조를 AUTO로 두면 김서림을 알아서 막아요."
+                    }
                 }
             }
         }

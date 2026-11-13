@@ -42,7 +42,7 @@ object BriefingPlanner {
         val sorted = hazards.sortedBy { it.spot.atKm }
         val delay = delayMinutes(sorted, ctx.baseRemainingMin, ctx.weather)
         val arrival = ctx.baseRemainingMin?.let { Clock.plus(ctx.clock, it + delay) }
-        val checks = checks(v)
+        val checks = checks(v, ctx.weather)
         val weatherLine = weatherLine(ctx.weather)
         val speech = Phrases.briefing(v, ctx, sorted, delay, checks, full, careful, firstFrost)
         return Briefing(v.outsideTempC, weatherLine, sorted, delay, ctx.baseRemainingMin, arrival, checks, firstFrost, speech)
@@ -80,9 +80,16 @@ object BriefingPlanner {
         return minutes.roundToInt()
     }
 
+    /** 추운 날 전기차 배터리를 확인하라고 할 잔량 */
+    const val COLD_BATTERY_PERCENT = 40
+
     /** 날씨와 관련된 항목만 ‘정상 / 확인 필요’로 */
-    fun checks(v: VehicleState): List<CheckItem> {
+    fun checks(v: VehicleState, w: RoadWeather? = null): List<CheckItem> {
         val out = mutableListOf<CheckItem>()
+        // 눈 온 다음 날: 라이트·후미등·센서의 눈부터 (출발 전에만)
+        if (w != null && w.lastPrecip == Precip.SNOW && (w.daysSincePrecip ?: Int.MAX_VALUE) <= 1 && !v.isDriving) {
+            out += CheckItem("snow", "라이트·센서 눈", "먼저 치우기", CheckLevel.WARN, "쌓인 눈이 라이트·후미등·센서를 가리면 다른 차가 나를 못 봐요")
+        }
         v.tireLow?.let {
             out += if (it) CheckItem("tire", "타이어 공기압", "확인 필요", CheckLevel.WARN, "추운 날은 공기압이 떨어져요")
             else CheckItem("tire", "타이어 공기압", "정상", CheckLevel.OK)
@@ -105,6 +112,14 @@ object BriefingPlanner {
         }
         if (v.lowBeam.switch == LampSwitch.AUTO) out += CheckItem("light", "전조등", "오토 라이트", CheckLevel.OK)
         else if (v.lowBeam.switch == LampSwitch.OFF) out += CheckItem("light", "전조등", "꺼짐", CheckLevel.INFO, "AUTO로 두면 어두울 때 켜져요")
+        v.batteryPercent?.let { pct ->
+            val cold = (v.outsideTempC ?: Double.MAX_VALUE) <= 0.0
+            out += if (cold && pct <= COLD_BATTERY_PERCENT) {
+                CheckItem("battery", "배터리", "$pct% · 충전 확인", CheckLevel.WARN, "추운 날은 주행 가능 거리가 줄어요")
+            } else {
+                CheckItem("battery", "배터리", "$pct%", CheckLevel.OK)
+            }
+        }
         return out
     }
 }

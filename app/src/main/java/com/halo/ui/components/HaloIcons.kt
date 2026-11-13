@@ -36,6 +36,7 @@ object HaloIcons {
     val Wiper: ImageVector by lazy { line("Wiper", "M3 18a12 12 0 0 1 18 0 M12 18l6.5-9") }
     val Pin: ImageVector by lazy { line("Pin", "M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21z M9.5 9.5a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0 -5 0z") }
     val Drop: ImageVector by lazy { line("Drop", "M12 3c-3.5 5-6 8.3-6 11.2A6 6 0 0 0 18 14.2C18 11.3 15.5 8 12 3z") }
+    val Battery: ImageVector by lazy { line("Battery", "M5 7h12a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-12a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2z M21 10.5v3M7 12h6") }
     val Car: ImageVector by lazy { line("Car", "M5 16v3M19 16v3M3.5 16V12l2.2-5.2A2 2 0 0 1 7.5 5.5h9a2 2 0 0 1 1.8 1.3L20.5 12v4z M3.5 12h17M7 14h1.5M15.5 14H17") }
     val Tunnel: ImageVector by lazy { line("Tunnel", "M3 20v-9a9 9 0 0 1 18 0v9 M7.5 20v-7a4.5 4.5 0 0 1 9 0v7 M2 20h20") }
     val Speaker: ImageVector by lazy { line("Speaker", "M4 9.5h3.5L12 5.5v13l-4.5-4H4z M15.5 9a4 4 0 0 1 0 6 M18 6.5a7.5 7.5 0 0 1 0 11") }

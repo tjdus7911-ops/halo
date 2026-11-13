@@ -1,6 +1,7 @@
 name: Screenshots
 
 # 에뮬레이터 없이 Paparazzi 로 화면을 그려 ci/screenshots 브랜치에 올립니다.
+# ScreensSnapshotTest: 검토용 주요 장면 · DocScreensTest: 기획서·발표 자료용 2배 해상도 화면
 on:
   workflow_dispatch:
   push:
@@ -29,7 +30,7 @@ jobs:
         run: |
           chmod +x gradlew
           set -o pipefail
-          ./gradlew --no-daemon :app:recordPaparazziDebug --tests "com.halo.ui.ScreensSnapshotTest" 2>&1 | tee record.log
+          ./gradlew --no-daemon :app:recordPaparazziDebug --tests "com.halo.ui.*" 2>&1 | tee record.log
 
       - name: Report errors
         if: failure()
@@ -41,7 +42,7 @@ jobs:
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mkdir -p out
-          cp app/src/test/snapshots/images/*ScreensSnapshotTest*.png out/
+          cp app/src/test/snapshots/images/*.png out/
           cd out
           git init -q -b ci/screenshots
           git config user.name "github-actions[bot]"

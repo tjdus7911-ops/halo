@@ -107,6 +107,7 @@ class CarVehicleFeed(context: Context) : VehicleFeed, HaloVehicleBridge.Sink {
             defrostControllable = r.defrostWritable,
             washerLow = r.washerLow,
             tireLow = r.tireLow,
+            batteryPercent = r.batteryPercent,
         )
     }
 
@@ -284,6 +285,11 @@ class CarVehicleFeed(context: Context) : VehicleFeed, HaloVehicleBridge.Sink {
 
     override fun onTireLow(low: Boolean?) = set { it.copy(tireLow = low) }
 
+    override fun onBatteryPercent(percent: Int?) {
+        if (percent == null || percent !in 0..100) return
+        set { it.copy(batteryPercent = percent) }
+    }
+
     // ---------------- 도움 ----------------
 
     private fun set(change: (Raw) -> Raw) {
@@ -319,6 +325,7 @@ class CarVehicleFeed(context: Context) : VehicleFeed, HaloVehicleBridge.Sink {
         val defrostWritable: Boolean = false,
         val washerLow: Boolean? = null,
         val tireLow: Boolean? = null,
+        val batteryPercent: Int? = null,
     )
 
     private fun gearOfAaos(raw: Int): Gear = when {

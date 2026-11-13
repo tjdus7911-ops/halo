@@ -121,6 +121,8 @@ data class VehicleState(
     val defrostControllable: Boolean = false,
     val washerLow: Boolean? = null,
     val tireLow: Boolean? = null,
+    /** 전기차 배터리 잔량(%). 전기차가 아니거나 모르면 null */
+    val batteryPercent: Int? = null,
 ) {
     val isDriving: Boolean get() = gear == Gear.DRIVE || speedKmh > 3.0
 }

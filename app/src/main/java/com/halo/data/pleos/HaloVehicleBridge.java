@@ -24,6 +24,7 @@ import ai.pleos.playground.vehicle.constant.control.LightState;
 import ai.pleos.playground.vehicle.constant.control.LightSwitch;
 import ai.pleos.playground.vehicle.constant.control.VehicleGear;
 import ai.pleos.playground.vehicle.constant.control.WiperState;
+import ai.pleos.playground.vehicle.listener.EvBatteryStateOfChargeListener;
 import ai.pleos.playground.vehicle.listener.GearSelectionListener;
 import ai.pleos.playground.vehicle.listener.HvacAutoStateListener;
 import ai.pleos.playground.vehicle.listener.HvacDefrosterStateListener;
@@ -86,6 +87,9 @@ public final class HaloVehicleBridge {
         void onWasherLow(Boolean low);
 
         void onTireLow(Boolean low);
+
+        /** 전기차 배터리 잔량(%). 전기차가 아니면 불리지 않는다 */
+        void onBatteryPercent(Integer percent);
     }
 
     public interface Done {
@@ -292,6 +296,20 @@ public final class HaloVehicleBridge {
         };
         register("washer", () -> vehicle.getSafety().registerLowWasherFluidWaringState(washer),
                 () -> vehicle.getSafety().unregisterLowWasherFluidWaringState(washer));
+
+        EvBatteryStateOfChargeListener battery = new EvBatteryStateOfChargeListener() {
+            @Override
+            public void onEvBatteryStateOfChargeUpdated(Integer value) {
+                sink.onBatteryPercent(value);
+            }
+
+            @Override
+            public void onFailed(Exception error) {
+                failed(error);
+            }
+        };
+        register("ev battery", () -> vehicle.getEvBattery().registerEvBatteryStateOfCharge(battery),
+                () -> vehicle.getEvBattery().unregisterEvBatteryStateOfCharge(battery));
     }
 
     /** 사이드미러는 차마다 영역(좌우)이 달라, 지원 영역을 알아낸 뒤에 붙인다 */
@@ -386,6 +404,8 @@ public final class HaloVehicleBridge {
                 v -> { sink.onDefrost(v); return Unit.INSTANCE; }, this::failed));
         safely("washer now", () -> vehicle.getSafety().hasLowWasherFluidWarning(
                 v -> { sink.onWasherLow(v); return Unit.INSTANCE; }, this::failed));
+        safely("ev battery now", () -> vehicle.getEvBattery().getEvBatteryStateOfCharge(
+                v -> { sink.onBatteryPercent(v); return Unit.INSTANCE; }, this::failed));
         readTires(sink);
     }
 

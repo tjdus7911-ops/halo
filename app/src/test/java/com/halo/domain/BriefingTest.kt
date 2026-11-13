@@ -59,3 +59,43 @@ class BriefingTest {
         assertEquals("사이드미러·핸들 열선과 김서림 방지를 켰어요.", Phrases.modeOnDone(withDefrost, careful = false))
     }
 }
+
+/** 기획서 ②: 눈 온 다음 날 체크 · 출발 전 자동 기능 점검 · 전기차 배터리 */
+class BriefingChecksTest {
+
+    private val parked = VehicleState(gear = Gear.PARK, outsideTempC = -6.0)
+
+    @Test
+    fun snowOvernightAsksToClearLightsFirst() {
+        val w = RoadWeather(minTempTodayC = -6.0, maxTempTodayC = 1.0, daysSincePrecip = 0, lastPrecip = Precip.SNOW)
+        val checks = BriefingPlanner.checks(parked, w)
+        assertEquals("snow", checks.first().id)
+        val b = BriefingPlanner.build(parked, DriveContext("07:30", weather = w), emptyList(), full = true, careful = false, firstFrost = false)
+        assertTrue(b.speech, "밤사이 눈이 와서 라이트와 후미등, 센서의 눈부터 치워 주세요." in b.speech)
+        // 달리는 중에는 묻지 않는다
+        assertTrue(BriefingPlanner.checks(parked.copy(gear = Gear.DRIVE, speedKmh = 40.0), w).none { it.id == "snow" })
+    }
+
+    @Test
+    fun autoFeaturesOffAreMentionedBeforeDeparture() {
+        val v = parked.copy(climateAuto = false, lowBeam = LampInfo(switch = LampSwitch.OFF))
+        val w = RoadWeather(minTempTodayC = -6.0, maxTempTodayC = 1.0, daysSincePrecip = null)
+        val b = BriefingPlanner.build(v, DriveContext("07:30", weather = w), emptyList(), full = true, careful = false, firstFrost = false)
+        assertTrue(b.speech, "전조등을 AUTO로 두고 출발하세요." in b.speech)
+        assertTrue(b.speech, "공조를 AUTO로 두면 김서림을 알아서 막아요." in b.speech)
+        // 요약 브리핑에서는 말하지 않는다
+        val short = BriefingPlanner.build(v, DriveContext("07:30", weather = w), emptyList(), full = false, careful = false, firstFrost = false)
+        assertTrue(short.speech, "AUTO로 두고" !in short.speech)
+    }
+
+    @Test
+    fun coldLowBatteryIsAWarning() {
+        val low = BriefingPlanner.checks(parked.copy(batteryPercent = 32))
+        assertEquals("32% · 충전 확인", low.single { it.id == "battery" }.status)
+        val fine = BriefingPlanner.checks(parked.copy(batteryPercent = 80))
+        assertEquals(CheckLevel.OK, fine.single { it.id == "battery" }.level)
+        assertTrue(BriefingPlanner.checks(parked).none { it.id == "battery" })
+        val b = BriefingPlanner.build(parked.copy(batteryPercent = 32), DriveContext("07:30", weather = RoadWeather(-6.0, 1.0, null)), emptyList(), full = true, careful = false, firstFrost = false)
+        assertTrue(b.speech, "배터리가 32%예요. 추운 날은 주행 가능 거리가 줄어요." in b.speech)
+    }
+}
