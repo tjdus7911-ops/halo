@@ -17,7 +17,9 @@ adb shell am start -W -n "$PKG/com.halo.MainActivity"
 sleep 15
 
 shot() { adb exec-out screencap -p > "$OUT/$1.png"; }
-tap() { python3 tools/emulator/tap.py "$1" || echo "not found: $1" >> "$OUT/missing.txt"; }
+tap() { python3 tools/emulator/tap.py "$1" --a11y-log "$OUT/a11y.txt" || echo "not found: $1" >> "$OUT/missing.txt"; }
+# 장면이 실제로 바뀌었는지: 화면(접근성 트리)에 글자가 있는지만 본다
+expect() { python3 tools/emulator/tap.py "$1" --check --a11y-log "$OUT/a11y.txt" || echo "not on screen: $1" >> "$OUT/missing.txt"; }
 
 play() {
   local name=$1
@@ -33,14 +35,17 @@ play winter
 
 tap "설정"; sleep 2; shot settings
 tap "7월 퇴근길"; sleep 2; tap "설정 닫기"; sleep 12
+expect "7월 퇴근길 · 장마철 폭우"
 play monsoon
 
 tap "설정"; sleep 2
 tap "10월 새벽"; sleep 2; tap "설정 닫기"; sleep 12
+expect "10월 새벽 · 강변 도로 짙은 안개"
 play fog
 
 # 화면 버튼으로 답하기: 처음부터 다시 틀어 첫 질문에 버튼으로 답한다
 tap "처음부터"; sleep 20
+expect "1/6"
 shot answer_before
 tap "이대로 갈게"
 sleep 3

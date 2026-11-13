@@ -51,6 +51,7 @@ import com.halo.ui.components.HIcon
 import com.halo.ui.components.HairlineH
 import com.halo.ui.components.HaloIcons
 import com.halo.ui.components.KText
+import com.halo.ui.components.accessibleText
 import com.halo.ui.components.keepWords
 import com.halo.ui.components.InfoRow
 import com.halo.ui.components.SectionLabel
@@ -134,16 +135,18 @@ private fun lampIcon(l: Lamp) = when (l) {
 @Composable
 private fun ModeOnDetail(p: ModeProposal) {
     DetailHeader(modeIcon(p.mode), "${p.mode.label} 켤까요?", p.evidence.joinToString(" · ").ifEmpty { null })
+    val summary = buildAnnotatedString {
+        append(keepWords("자동으로 도는 기능은 "))
+        withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = HaloColors.Text)) { append(keepWords("그대로 두고")) }
+        append(keepWords(", 자동이 아닌 "))
+        withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = HaloColors.Text)) { append(keepWords("${p.turnOn.size}가지만")) }
+        append(keepWords(" 켤게요"))
+    }
     Text(
-        buildAnnotatedString {
-            append(keepWords("자동으로 도는 기능은 "))
-            withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = HaloColors.Text)) { append(keepWords("그대로 두고")) }
-            append(keepWords(", 자동이 아닌 "))
-            withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = HaloColors.Text)) { append(keepWords("${p.turnOn.size}가지만")) }
-            append(keepWords(" 켤게요"))
-        },
+        summary,
         style = HaloType.Body,
         color = HaloColors.TextDim,
+        modifier = Modifier.accessibleText(summary.text),
     )
     Spacer(Modifier.height(HaloSpace.s))
     p.turnOn.forEach {

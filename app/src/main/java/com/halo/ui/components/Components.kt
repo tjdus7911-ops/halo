@@ -40,6 +40,9 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.text
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -258,6 +261,8 @@ fun Chip(text: String, icon: ImageVector? = null, color: Color = HaloColors.Text
     }
 }
 
+private const val WORD_JOINER = '\u2060'
+
 /**
  * 한국어 낱말 안에서 줄이 바뀌지 않게 한다: 띄어쓰기가 아닌 한글 글자 사이에 줄바꿈 금지 문자(U+2060)를 넣는다.
  * 화면 표시에만 쓴다 (음성으로 읽는 문장에는 넣지 않는다).
@@ -269,12 +274,21 @@ fun keepWords(text: String): String {
         val c = text[i]
         sb.append(c)
         val next = text.getOrNull(i + 1) ?: break
-        if (!c.isWhitespace() && !next.isWhitespace() && (c.isHangul() || next.isHangul())) sb.append('⁠')
+        if (!c.isWhitespace() && !next.isWhitespace() && (c.isHangul() || next.isHangul())) sb.append(WORD_JOINER)
     }
     return sb.toString()
 }
 
 private fun Char.isHangul(): Boolean = this in '가'..'힣'
+
+/**
+ * 화면 낭독기와 UI 자동화 도구에는 줄바꿈 금지 문자를 뺀 원래 문장을 준다.
+ * Text가 스스로 넣는 글자 정보를 지우고 이 문장으로 바꾼다.
+ */
+fun Modifier.accessibleText(sentence: String): Modifier {
+    val plain = sentence.replace(WORD_JOINER.toString(), "")
+    return clearAndSetSemantics { text = AnnotatedString(plain) }
+}
 
 /** 한국어 문장: 낱말 단위로 줄을 바꾼다 */
 @Composable
@@ -287,5 +301,5 @@ fun KText(
     overflow: TextOverflow = TextOverflow.Clip,
     textAlign: TextAlign? = null,
 ) {
-    Text(keepWords(text), modifier = modifier, color = color, style = style, maxLines = maxLines, overflow = overflow, textAlign = textAlign)
+    Text(keepWords(text), modifier = modifier.accessibleText(text), color = color, style = style, maxLines = maxLines, overflow = overflow, textAlign = textAlign)
 }
