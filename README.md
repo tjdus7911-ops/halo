@@ -53,6 +53,11 @@ GitHub Actions(`.github/workflows/android.yml`)가 푸시마다 단위 테스트
 화면은 Screenshots 워크플로가 주요 장면 13개(브리핑 · 레이더 · 비/눈 모드 · 등화 · 도착 · 대답 없음 · 설정 · 연결 상태)를
 에뮬레이터 없이 그려 `ci/screenshots` 브랜치에 올립니다.
 
+Emulator smoke test 워크플로는 안드로이드 에뮬레이터(API 34, 1600×900)에 APK를 설치해 시연 시나리오 3가지를 끝까지 넘기고,
+설정에서 시나리오 바꾸기와 화면 버튼으로 답하기를 확인합니다(`tools/emulator/smoke.sh`).
+장면별 화면·로그·앱 종료 여부는 `ci/emulator` 브랜치에 올립니다. Pleos 서비스가 없는 에뮬레이터라
+Pleos TTS·STT 대신 안드로이드 기본 음성으로 동작합니다.
+
 로컬에서는 JDK 17과 Android SDK(compileSdk 35)가 있으면 됩니다.
 
 ```bash
