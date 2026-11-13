@@ -92,6 +92,17 @@ class VoiceFlow(
         pump()
     }
 
+    /**
+     * 엔진이 거둔 질문 (켜자고 한 이유가 사라짐): 그 질문을 읽거나 듣는 중이면 멈추고 다음으로 넘어간다.
+     * 대답 없음으로 알리지 않는다 (화면에 남길 질문이 아니다). 줄에 선 질문은 차례가 오면 [Callbacks.isAsking]으로 건너뛴다.
+     */
+    fun withdraw(questionId: String) {
+        if (askingId != questionId) return
+        stopCurrent()
+        setState(VoiceState())
+        pump()
+    }
+
     /** 읽던 말을 멈추고 줄 선 말을 버린다. 묻던 질문은 대답 없음으로 알린다 (화면에는 남는다). */
     fun interrupt() {
         val asking = askingId

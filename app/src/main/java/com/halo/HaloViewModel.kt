@@ -84,10 +84,7 @@ class HaloViewModel(app: Application) : AndroidViewModel(app) {
     private var settingsOpen = false
 
     private val voice = VoiceFlow(speaker, listener, HandlerScheduler(main), object : VoiceFlow.Callbacks {
-        override fun isAsking(questionId: String): Boolean {
-            val snap = engine?.snapshot() ?: return false
-            return snap.asking && snap.question?.id == questionId
-        }
+        override fun isAsking(questionId: String): Boolean = engineAsks(questionId)
 
         override fun onAnswer(questionId: String, answer: Answer, heard: String?) {
             engine?.let { handle(it.answer(questionId, answer, now())) }
@@ -227,8 +224,15 @@ class HaloViewModel(app: Application) : AndroidViewModel(app) {
             Source.DEMO -> demoTick()
             Source.LIVE -> liveTick()
         }
+        // 엔진이 거둔 질문(켜자고 한 이유가 사라짐)은 더 듣지 않는다
+        voice.askingId?.let { id -> if (!engineAsks(id)) voice.withdraw(id) }
         clearGuideIfDone()
         publish()
+    }
+
+    private fun engineAsks(questionId: String): Boolean {
+        val snap = engine?.snapshot() ?: return false
+        return snap.asking && snap.question?.id == questionId
     }
 
     private fun demoTick() {

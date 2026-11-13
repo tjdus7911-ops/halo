@@ -116,6 +116,9 @@ class HaloEngine(
     private val lampsOn = mutableSetOf<Lamp>()
     private val awaiting = mutableMapOf<Lamp, Pair<Boolean, Long>>()
     private var detourTaken = false
+    /** 지금 켜자고 할 이유가 있는 비·눈 모드와 등화 (대답을 못 들어 화면에 남긴 제안을 거둘 때 본다) */
+    private var modeNeeded: WeatherMode? = null
+    private var lampsNeeded: Set<Lamp> = emptySet()
     private val speeds = SpeedHistory()
     private var genericIceAt: Long? = null
     private var seq = 0
@@ -160,6 +163,7 @@ class HaloEngine(
 
         // 3) 비·눈 모드
         val trigger = WeatherModePlanner.trigger(v, ctx.weather)
+        modeNeeded = trigger.takeIf { !ctx.arrived }
         if (trigger == null) asked.removeAll { it.startsWith("mode-on") }
         if (activeMode == null && trigger != null && !ctx.arrived) {
             val key = "mode-on:$trigger"
@@ -190,7 +194,12 @@ class HaloEngine(
         if (braking && badWeather && Lamp.HAZARD !in lampsOn) {
             enqueueOnce(lampOnQuestion(Lamp.HAZARD, "lamp-on:HAZARD", false).copy(urgent = true), front = true)
         }
-        if (Lamp.HAZARD in lampsOn && !braking && v.speedKmh >= 40.0) enqueueOnce(lampOffQuestion(Lamp.HAZARD))
+        if (Lamp.HAZARD in lampsOn && !braking && v.speedKmh >= HAZARD_OFF_KMH) enqueueOnce(lampOffQuestion(Lamp.HAZARD))
+        lampsNeeded = if (ctx.arrived) emptySet() else buildSet {
+            if (LightPlanner.headlightNeeded(v, ctx.weather, fog != null)) add(Lamp.LOW_BEAM)
+            if (LightPlanner.fogLightNeeded(v, fog)) add(Lamp.FRONT_FOG)
+            if (badWeather && (braking || v.speedKmh < HAZARD_OFF_KMH)) add(Lamp.HAZARD)
+        }
 
         // 5) 스위치를 직접 눌러 달라고 한 등화가 켜졌는지 확인
         val confirmed = awaiting.filter { (lamp, want) -> lampIsOn(lamp, v) == want.first }.keys
@@ -209,6 +218,8 @@ class HaloEngine(
         }
         queue.removeAll { !stillValid(it) }
         if (onScreen?.let { !stillValid(it) } == true) onScreen = null
+        // 음성 차례를 기다리던 질문도 이유가 사라졌으면 거둔다 (음성 흐름은 묻기 전에 다시 확인한다)
+        if (current?.let { !stillValid(it) } == true) current = null
         if (current == null) {
             val next = queue.firstOrNull { QuestionPolicy.canAskNow(v, braking, naviSpeaking, it.urgent) }
             if (next != null) {
@@ -422,10 +433,11 @@ class HaloEngine(
         Lamp.HAZARD -> false
     }
 
+    /** 아직 물을 이유가 있는지: 켜자고 한 이유(비·눈·안개·급감속)가 사라졌거나 도착했으면 거둔다 */
     private fun stillValid(q: Question): Boolean = when (val k = q.kind) {
-        is QuestionKind.LampOn -> !lampIsOn(k.lamp, vehicle) || k.lamp == Lamp.HAZARD
+        is QuestionKind.LampOn -> k.lamp in lampsNeeded
         is QuestionKind.LampOff -> k.lamp == Lamp.HAZARD || lampIsOn(k.lamp, vehicle)
-        is QuestionKind.ModeOn -> activeMode == null
+        is QuestionKind.ModeOn -> activeMode == null && modeNeeded == k.proposal.mode
         is QuestionKind.ModeOff -> activeMode?.mode == k.mode
         is QuestionKind.Route -> !vehicle.isDriving || ctx.progressKm < 0.5
         QuestionKind.CarefulOffer -> !settings.carefulOffered
@@ -481,5 +493,8 @@ class HaloEngine(
 
     private companion object {
         const val RE_ASK_DELAY_MS = 20_000L
+
+        /** 이 속도로 돌아오면 급감속 상황이 끝난 것으로 본다 (비상등 끄기 제안) */
+        const val HAZARD_OFF_KMH = 40.0
     }
 }

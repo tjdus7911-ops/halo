@@ -125,6 +125,34 @@ class VoiceFlowTest {
     }
 
     @Test
+    fun withdrawnQuestionStopsListeningWithoutNoAnswer() {
+        flow.ask(question("q1"))
+        flow.say("다음 말")
+        speaker.done()
+        assertEquals(VoicePhase.LISTENING, flow.state.phase)
+        // 엔진이 질문을 거두면 듣기를 멈추고 다음 말로 넘어간다
+        asking -= "q1"
+        flow.withdraw("q1")
+        assertNull(listener.pending)
+        assertTrue(noAnswers.isEmpty())
+        assertEquals(listOf("q1?", "다음 말"), speaker.spoken)
+        // 늦게 온 시간 초과는 무시한다
+        speaker.done()
+        clock.advance(VoiceFlow.LISTEN_MS)
+        assertTrue(noAnswers.isEmpty())
+        assertFalse(flow.busy)
+    }
+
+    @Test
+    fun withdrawIgnoresOtherQuestions() {
+        flow.ask(question("q1"))
+        speaker.done()
+        flow.withdraw("q2")
+        assertEquals(VoicePhase.LISTENING, flow.state.phase)
+        assertEquals("q1", flow.askingId)
+    }
+
+    @Test
     fun asksThenListensAndTakesYes() {
         flow.ask(question("q1"))
         assertEquals("q1?", speaker.spoken.single())

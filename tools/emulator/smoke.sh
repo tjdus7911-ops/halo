@@ -43,12 +43,14 @@ tap "10월 새벽"; sleep 2; tap "설정 닫기"; sleep 12
 expect "10월 새벽 · 강변 도로 짙은 안개"
 play fog
 
-# 화면 버튼으로 답하기: 처음부터 다시 틀어 첫 질문에 버튼으로 답한다
-tap "처음부터"; sleep 20
-expect "1/6"
+# 화면 버튼으로 답하기: 1월 출근길을 처음부터 다시 틀어 첫 질문(다른 길로 갈까요?)에 버튼으로 답한다
+tap "설정"; sleep 2
+tap "1월 출근길"; sleep 2; tap "설정 닫기"; sleep 3
+tap "처음부터"; sleep 12
+expect "1월 출근길 · 영하 4도"
 shot answer_before
 tap "이대로 갈게"
-sleep 3
+expect "지금 길로 갈게요"
 shot answer_after
 
 adb logcat -d > "$OUT/logcat.txt"
