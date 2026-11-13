@@ -39,9 +39,10 @@ app/src/main/java/com/halo
 │   ├── pleos/             SDK 리스너를 자바로 감싼 부분
 │   ├── PleosNaviFeed.kt   NaviHelper (남은 시간·도착·주의 지점)
 │   └── speech/            Pleos TTS·STT (없으면 안드로이드 기본 음성)
+├── voice/         음성 줄: 한 번에 하나씩 읽고, 질문 뒤 대답 듣기 (단위 테스트로 검증)
 ├── gleo/          Gleo AI 브로드캐스트 수신
 ├── ui/            Jetpack Compose 화면
-└── HaloViewModel.kt   엔진 효과를 차례로 처리 (음성 줄 세우기, 제어, 안내)
+└── HaloViewModel.kt   차량·시연 값을 엔진에 넣고 효과(읽기·묻기·제어·안내)를 처리
 ```
 
 ## 빌드

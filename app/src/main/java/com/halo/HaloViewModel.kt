@@ -9,17 +9,15 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.halo.data.CarVehicleFeed
 import com.halo.data.FeedStatus
+import com.halo.data.HandlerScheduler
 import com.halo.data.NaviVoiceMonitor
 import com.halo.data.PleosNaviFeed
 import com.halo.data.SettingsStore
 import com.halo.data.VehicleFeed
 import com.halo.data.speech.AndroidAnswerListener
 import com.halo.data.speech.AndroidSpeaker
-import com.halo.data.speech.AnswerListener
-import com.halo.data.speech.FirstReadyListener
 import com.halo.data.speech.PleosAnswerListener
 import com.halo.data.speech.PleosSpeaker
-import com.halo.data.speech.Speaker
 import com.halo.demo.DemoRun
 import com.halo.demo.DemoScenarios
 import com.halo.domain.Answer
@@ -32,15 +30,17 @@ import com.halo.domain.HaloEngine
 import com.halo.domain.HaloSettings
 import com.halo.domain.Lamp
 import com.halo.domain.LiveTrip
-import com.halo.domain.Question
-import com.halo.domain.VoiceAnswer
 import com.halo.gleo.GleoBridge
 import com.halo.ui.state.DemoUi
 import com.halo.ui.state.GuideNote
 import com.halo.ui.state.HaloUiState
 import com.halo.ui.state.Source
-import com.halo.ui.state.VoicePhase
 import com.halo.ui.state.VoiceUi
+import com.halo.voice.AnswerListener
+import com.halo.voice.FirstReadyListener
+import com.halo.voice.Speaker
+import com.halo.voice.VoiceFlow
+import com.halo.voice.VoiceState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -53,10 +53,8 @@ import java.time.format.DateTimeFormatter
 
 /**
  * 헤일로 화면의 상태. 판단은 [HaloEngine] 이 하고, 여기서는
- * 차량·내비 값을 엔진에 넣고(1초마다), 엔진이 낸 효과(읽기·묻기·제어·안내)를 차례로 처리한다.
- *
- * 음성은 한 번에 하나씩: 읽을 말과 질문을 줄 세워 읽고, 질문 뒤에는 대답을 듣는다.
- * 대답이 없으면 아무것도 바꾸지 않고 질문을 화면에 남긴다.
+ * 차량·내비 값을 1초마다 엔진에 넣고, 엔진이 낸 효과(읽기·묻기·제어·안내)를 처리한다.
+ * 음성은 [VoiceFlow] 가 한 번에 하나씩 차례로 읽고 듣는다.
  */
 class HaloViewModel(app: Application) : AndroidViewModel(app) {
 
@@ -68,7 +66,7 @@ class HaloViewModel(app: Application) : AndroidViewModel(app) {
     private val listener: AnswerListener = FirstReadyListener(listOf(PleosAnswerListener(app), AndroidAnswerListener(app)))
     private val naviVoice = NaviVoiceMonitor(app)
 
-    // 실제 차량 (권한을 받은 뒤 연결한다)
+    // 실제 차량 (권한을 물은 뒤 연결한다)
     private var feed: VehicleFeed? = null
     private var navi: PleosNaviFeed? = null
     private var trip = LiveTrip()
@@ -82,24 +80,31 @@ class HaloViewModel(app: Application) : AndroidViewModel(app) {
 
     private var source: Source = if (isAutomotive) Source.LIVE else Source.DEMO
     private var engine: HaloEngine? = null
-
-    // 음성
-    private sealed interface Utterance {
-        data class Say(val text: String) : Utterance
-        data class Ask(val question: Question) : Utterance
-    }
-
-    private val voiceQueue = ArrayDeque<Utterance>()
-    private var voiceToken = 0
-    private var voiceBusy = false
-    private var askingId: String? = null
-    private var listenSeq = 0
-    private var naviWaitSince: Long? = null
-    private var voice = VoiceUi()
     private var guide: GuideNote? = null
     private var settingsOpen = false
 
-    private val _ui = MutableStateFlow(HaloUiState(source = source, feed = FeedStatus.CONNECTING))
+    private val voice = VoiceFlow(speaker, listener, HandlerScheduler(main), object : VoiceFlow.Callbacks {
+        override fun isAsking(questionId: String): Boolean {
+            val snap = engine?.snapshot() ?: return false
+            return snap.asking && snap.question?.id == questionId
+        }
+
+        override fun onAnswer(questionId: String, answer: Answer, heard: String?) {
+            engine?.let { handle(it.answer(questionId, answer, now())) }
+            publish()
+        }
+
+        override fun onNoAnswer(questionId: String) {
+            engine?.let { handle(it.noAnswer(questionId, now())) }
+            publish()
+        }
+
+        override fun onStateChanged(state: VoiceState) = publish()
+
+        override fun naviSpeaking(): Boolean = source == Source.LIVE && naviVoice.guidancePlaying.value
+    })
+
+    private val _ui = MutableStateFlow(HaloUiState(source = source, feed = FeedStatus.CONNECTING, isAutomotive = isAutomotive))
     val ui: StateFlow<HaloUiState> = _ui.asStateFlow()
 
     private val gleoHandler: (GleoCommand) -> GleoResult = { handleGleo(it) }
@@ -117,16 +122,22 @@ class HaloViewModel(app: Application) : AndroidViewModel(app) {
 
     // ---------------- 화면에서 부르는 동작 ----------------
 
-    /** 차량 권한을 물은 뒤 (허용 여부와 상관없이): 실제 차량에 연결한다 */
+    /** 권한을 물은 뒤 (허용 여부와 상관없이): 차량이면 실제 차량에 연결한다 */
     fun onVehiclePermissionResult() {
         if (!isAutomotive || feed != null) return
         feed = CarVehicleFeed(getApplication())
         navi = PleosNaviFeed(getApplication())
-        if (source == Source.LIVE) publish()
+        publish()
     }
 
     /** 화면 버튼으로 답하기 */
-    fun answer(questionId: String, yes: Boolean) = respond(questionId, if (yes) Answer.YES else Answer.NO)
+    fun answer(questionId: String, yes: Boolean) {
+        val e = engine ?: return
+        voice.answeredElsewhere(questionId) {
+            handle(e.answer(questionId, if (yes) Answer.YES else Answer.NO, now()))
+        }
+        publish()
+    }
 
     /** 대답하지 않고 화면에 남은 질문을 닫는다 */
     fun dismiss(questionId: String) {
@@ -136,8 +147,11 @@ class HaloViewModel(app: Application) : AndroidViewModel(app) {
 
     fun setCareful(on: Boolean) {
         val e = engine
-        if (e != null) handle(e.setCareful(on))
-        else if (source == Source.LIVE) settingsStore.save(settingsStore.load().copy(careful = on, carefulOffered = true))
+        if (e != null) {
+            handle(e.setCareful(on))
+        } else if (source == Source.LIVE) {
+            settingsStore.save(settingsStore.load().copy(careful = on, carefulOffered = true))
+        }
         publish()
     }
 
@@ -149,13 +163,14 @@ class HaloViewModel(app: Application) : AndroidViewModel(app) {
     /** 오늘 길 브리핑을 다시 듣는다 */
     fun replayBriefing() {
         val e = engine ?: return
+        settingsOpen = false
         handle(e.gleoBriefing(now()))
         publish()
     }
 
     fun useLive() {
         if (source == Source.LIVE) return
-        resetVoice()
+        voice.clear()
         demo = null
         source = Source.LIVE
         engine = null
@@ -168,7 +183,7 @@ class HaloViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun startDemo(scenarioId: String) {
-        resetVoice()
+        voice.clear()
         source = Source.DEMO
         val scenario = DemoScenarios.byId(scenarioId)
         val season = seasonOf(LocalDate.now())
@@ -189,7 +204,7 @@ class HaloViewModel(app: Application) : AndroidViewModel(app) {
     fun demoNext() {
         val run = demo ?: return
         if (run.isLast) return
-        interruptVoice()
+        voice.interrupt()
         run.next()
         demoFrameStartedAt = SystemClock.elapsedRealtime()
         val e = engine ?: return
@@ -261,28 +276,23 @@ class HaloViewModel(app: Application) : AndroidViewModel(app) {
     // ---------------- 엔진 효과 처리 ----------------
 
     private fun handle(effects: List<Effect>) {
-        if (effects.isEmpty()) return
         for (e in effects) when (e) {
-            is Effect.Speak -> voiceQueue.addLast(Utterance.Say(e.text))
-            is Effect.Ask -> if (e.question.urgent) voiceQueue.addFirst(Utterance.Ask(e.question)) else voiceQueue.addLast(Utterance.Ask(e.question))
+            is Effect.Speak -> voice.say(e.text)
+            is Effect.Ask -> voice.ask(e.question)
             is Effect.Control -> control(e.command)
             is Effect.Guide -> {
                 guide = GuideNote(e.lamp, e.on, e.text, SystemClock.elapsedRealtime())
-                voiceQueue.addLast(Utterance.Say(e.text))
+                voice.say(e.text)
                 demo?.guided(e.lamp, e.on)
             }
             is Effect.SaveSettings -> if (source == Source.LIVE) settingsStore.save(e.settings)
         }
-        pumpVoice()
     }
 
     private fun control(command: ControlCommand) {
         val e = engine ?: return
         when (source) {
-            Source.DEMO -> {
-                val ok = demo?.apply(command) ?: false
-                handle(e.controlResult(command, ok, now()))
-            }
+            Source.DEMO -> handle(e.controlResult(command, demo?.apply(command) ?: false, now()))
             Source.LIVE -> {
                 val f = feed
                 if (f == null) {
@@ -309,137 +319,6 @@ class HaloViewModel(app: Application) : AndroidViewModel(app) {
             Lamp.HAZARD -> false
         }
         if (done || SystemClock.elapsedRealtime() - g.shownAt > GUIDE_SHOW_MS) guide = null
-    }
-
-    // ---------------- 음성: 한 번에 하나씩 ----------------
-
-    private fun pumpVoice() {
-        if (voiceBusy) return
-        val next = voiceQueue.firstOrNull()
-        if (next == null) {
-            setVoice(voice.copy(phase = VoicePhase.IDLE))
-            return
-        }
-        // 내비가 길을 안내하는 중이면 끝날 때까지 기다린다 (최대 6초)
-        if (source == Source.LIVE && naviVoice.guidancePlaying.value) {
-            val since = naviWaitSince ?: SystemClock.elapsedRealtime().also { naviWaitSince = it }
-            if (SystemClock.elapsedRealtime() - since < NAVI_WAIT_MS) {
-                main.postDelayed({ pumpVoice() }, 400L)
-                return
-            }
-        }
-        naviWaitSince = null
-        voiceQueue.removeFirst()
-        val token = ++voiceToken
-        when (next) {
-            is Utterance.Say -> {
-                voiceBusy = true
-                setVoice(VoiceUi(phase = VoicePhase.SPEAKING, caption = next.text, canListen = listener.ready))
-                speaker.speak(next.text) { if (token == voiceToken) finishUtterance() }
-            }
-            is Utterance.Ask -> {
-                val q = next.question
-                if (!isAsking(q)) {
-                    pumpVoice()
-                    return
-                }
-                voiceBusy = true
-                askingId = q.id
-                setVoice(VoiceUi(phase = VoicePhase.SPEAKING, caption = q.prompt, canListen = listener.ready))
-                speaker.speak(q.prompt) { if (token == voiceToken) awaitAnswer(q, token, retried = false) }
-            }
-        }
-    }
-
-    private fun finishUtterance() {
-        voiceBusy = false
-        askingId = null
-        pumpVoice()
-        publish()
-    }
-
-    /** 질문을 읽은 뒤: 대답을 듣는다. 들을 수 없으면 화면 버튼을 기다린다. */
-    private fun awaitAnswer(q: Question, token: Int, retried: Boolean) {
-        if (!isAsking(q)) {
-            finishUtterance()
-            return
-        }
-        val seq = ++listenSeq
-        val listening = listener.listen { text -> if (token == voiceToken && seq == listenSeq) onHeard(q, token, text, retried) }
-        setVoice(VoiceUi(phase = if (listening) VoicePhase.LISTENING else VoicePhase.WAITING_TAP, caption = q.prompt, canListen = listening))
-        publish()
-        main.postDelayed({
-            if (token == voiceToken && seq == listenSeq) noAnswer(q)
-        }, if (listening) LISTEN_MS else TAP_WAIT_MS)
-    }
-
-    private fun onHeard(q: Question, token: Int, text: String?, retried: Boolean) {
-        val answer = VoiceAnswer.parse(text)
-        if (answer != null) {
-            respond(q.id, answer, heard = text)
-            return
-        }
-        // 알아듣지 못하면 한 번만 다시 듣는다 (“응”이 다른 말로 들린 경우)
-        if (!retried && !text.isNullOrBlank()) awaitAnswer(q, token, retried = true) else noAnswer(q)
-    }
-
-    private fun noAnswer(q: Question) {
-        listener.cancel()
-        listenSeq++
-        engine?.let { handle(it.noAnswer(q.id, now())) }
-        voice = voice.copy(heard = null)
-        finishUtterance()
-    }
-
-    private fun respond(questionId: String, answer: Answer, heard: String? = null) {
-        val e = engine ?: return
-        if (askingId == questionId) {
-            // 묻거나 듣는 중이었으면 멈춘다
-            speaker.stop()
-            listener.cancel()
-            voiceToken++
-            listenSeq++
-            voiceBusy = false
-            askingId = null
-        }
-        voice = voice.copy(heard = heard)
-        handle(e.answer(questionId, answer, now()))
-        pumpVoice()
-        publish()
-    }
-
-    private fun isAsking(q: Question): Boolean {
-        val snap = engine?.snapshot() ?: return false
-        return snap.asking && snap.question?.id == q.id
-    }
-
-    /** 시연 장면을 넘길 때: 읽던 말을 멈추고, 묻던 질문은 대답 없음으로 둔다 (화면에는 남는다) */
-    private fun interruptVoice() {
-        speaker.stop()
-        listener.cancel()
-        voiceToken++
-        listenSeq++
-        askingId?.let { id -> engine?.let { handle(it.noAnswer(id, now())) } }
-        askingId = null
-        voiceBusy = false
-        voiceQueue.removeAll { it is Utterance.Say }
-        setVoice(VoiceUi(canListen = listener.ready))
-    }
-
-    private fun resetVoice() {
-        speaker.stop()
-        listener.cancel()
-        voiceToken++
-        listenSeq++
-        askingId = null
-        voiceBusy = false
-        voiceQueue.clear()
-        voice = VoiceUi(canListen = listener.ready)
-    }
-
-    private fun setVoice(v: VoiceUi) {
-        voice = v
-        publish()
     }
 
     // ---------------- Gleo AI ----------------
@@ -471,21 +350,9 @@ class HaloViewModel(app: Application) : AndroidViewModel(app) {
                 }
             }
         }
-        result.screenText?.let { showCaption(it) }
+        result.screenText?.let { voice.showCaption(it, 4_000L + it.length * 80L) }
         publish()
         return result
-    }
-
-    /** 읽지 않고 화면에만 잠깐 보여 준다 */
-    private fun showCaption(text: String) {
-        if (voiceBusy) return
-        setVoice(VoiceUi(phase = VoicePhase.IDLE, caption = text, canListen = listener.ready))
-        main.postDelayed({
-            if (!voiceBusy && voice.caption == text) {
-                setVoice(voice.copy(caption = null))
-                publish()
-            }
-        }, 4_000L + text.length * 80L)
     }
 
     // ---------------- 화면 상태 ----------------
@@ -498,11 +365,12 @@ class HaloViewModel(app: Application) : AndroidViewModel(app) {
             else -> f.status.value
         }
         val run = demo
+        val v = voice.state
         _ui.value = HaloUiState(
             source = source,
             feed = feedStatus,
             snapshot = engine?.snapshot(),
-            voice = voice.copy(canListen = voice.canListen || listener.ready),
+            voice = VoiceUi(v.phase, v.caption, canListen = listener.ready, heard = v.heard),
             demo = if (source == Source.DEMO && run != null) {
                 DemoUi(
                     scenarioId = run.scenario.id,
@@ -524,6 +392,7 @@ class HaloViewModel(app: Application) : AndroidViewModel(app) {
     override fun onCleared() {
         if (GleoBridge.handler === gleoHandler) GleoBridge.handler = null
         main.removeCallbacksAndMessages(null)
+        voice.clear()
         speaker.release()
         listener.release()
         naviVoice.release()
@@ -534,9 +403,6 @@ class HaloViewModel(app: Application) : AndroidViewModel(app) {
 
     private companion object {
         const val TICK_MS = 1_000L
-        const val LISTEN_MS = 6_000L
-        const val TAP_WAIT_MS = 5_000L
-        const val NAVI_WAIT_MS = 6_000L
         const val LIVE_SETTLE_MS = 4_000L
         const val GUIDE_SHOW_MS = 30_000L
         const val BRAKE_LEAD_MS = 2_000L

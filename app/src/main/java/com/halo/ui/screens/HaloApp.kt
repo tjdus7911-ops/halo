@@ -50,8 +50,8 @@ import com.halo.ui.components.StatusItem
 import com.halo.ui.state.DemoUi
 import com.halo.ui.state.HaloUiState
 import com.halo.ui.state.Source
-import com.halo.ui.state.VoicePhase
 import com.halo.ui.state.VoiceUi
+import com.halo.voice.VoicePhase
 import com.halo.ui.theme.HaloColors
 import com.halo.ui.theme.HaloSpace
 import com.halo.ui.theme.HaloType
@@ -83,7 +83,7 @@ fun HaloApp(state: HaloUiState, actions: HaloActions) {
             ) {
                 Body(state, actions)
             }
-            VoiceBar(state, actions)
+            if (state.snapshot != null) VoiceBar(state, actions) else Spacer(Modifier.height(HaloSpace.l))
             state.demo?.let { DemoBar(it, actions) }
         }
         AnimatedVisibility(visible = state.settingsOpen, enter = fadeIn(tween(160)), exit = fadeOut(tween(160))) {
@@ -122,6 +122,7 @@ fun contextLabel(state: HaloUiState): String {
         snap.phase == Phase.BRIEFING -> "시동 브리핑"
         q is QuestionKind.ModeOn -> "날씨 변화 감지"
         q is QuestionKind.LampOn || q is QuestionKind.LampOff -> "날씨 맞춤 등화"
+        snap.alert != null -> "살얼음·안개 레이더"
         mode != null -> mode.mode.label
         else -> "살얼음·안개 레이더"
     }
@@ -152,7 +153,7 @@ private fun Header(state: HaloUiState, actions: HaloActions) {
         Spacer(Modifier.weight(1f))
         Row(horizontalArrangement = Arrangement.spacedBy(HaloSpace.l), verticalAlignment = Alignment.CenterVertically) {
             if (state.snapshot?.settings?.careful == true) StatusItem(HaloIcons.Check, "꼼꼼히 안내", HaloColors.Ice)
-            VoiceStatus(state.voice)
+            if (state.snapshot != null) VoiceStatus(state.voice)
             SensorStatus(state)
         }
         Spacer(Modifier.width(HaloSpace.s))
@@ -241,6 +242,7 @@ private fun VoiceBar(state: HaloUiState, actions: HaloActions) {
 
 private fun voiceHint(voice: VoiceUi, question: Question?, snap: HaloSnapshot?): String? = when {
     question == null -> null
+    voice.phase == VoicePhase.SPEAKING && voice.caption != question.prompt -> "읽던 말이 끝나면 물어볼게요"
     voice.phase == VoicePhase.LISTENING -> "듣고 있어요 · “응” 한마디면 돼요"
     voice.phase == VoicePhase.WAITING_TAP -> "음성 인식을 쓸 수 없어요 · 버튼으로 답해 주세요"
     snap?.asking == false -> "대답을 못 들었어요 · 아무것도 바꾸지 않았어요"

@@ -14,8 +14,8 @@ import com.halo.ui.state.DemoUi
 import com.halo.ui.state.GuideNote
 import com.halo.ui.state.HaloUiState
 import com.halo.ui.state.Source
-import com.halo.ui.state.VoicePhase
 import com.halo.ui.state.VoiceUi
+import com.halo.voice.VoicePhase
 import com.halo.ui.theme.HaloTheme
 import org.junit.Rule
 import org.junit.Test

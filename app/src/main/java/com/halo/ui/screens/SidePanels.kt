@@ -52,6 +52,7 @@ import com.halo.ui.components.HairlineH
 import com.halo.ui.components.HaloIcons
 import com.halo.ui.components.InfoRow
 import com.halo.ui.components.SectionLabel
+import com.halo.ui.components.spotPosition
 import com.halo.ui.state.GuideNote
 import com.halo.ui.theme.HaloColors
 import com.halo.ui.theme.HaloSpace
@@ -217,7 +218,7 @@ private fun LampDetail(lamp: Lamp, on: Boolean, snap: HaloSnapshot) {
 private fun RouteDetail(d: Detour, snap: HaloSnapshot) {
     DetailHeader(HaloIcons.Pin, "${d.label}로 갈까요?", "${d.extraMin}분 더 걸려요")
     snap.ahead.filter { it.hazard.spot.id in d.avoidsSpotIds }.forEach {
-        InfoRow(spotIcon(it.hazard), it.hazard.spot.name, "피해요", HaloColors.Ok, note = "살얼음 ${it.hazard.level.label} · ${Phrases.distance(it.hazard.spot.atKm)} 지점")
+        InfoRow(spotIcon(it.hazard), it.hazard.spot.name, "피해요", HaloColors.Ok, note = "살얼음 ${it.hazard.level.label} · ${spotPosition(it.hazard.spot.atKm)} 지점")
         HairlineH()
     }
     Spacer(Modifier.height(HaloSpace.m))

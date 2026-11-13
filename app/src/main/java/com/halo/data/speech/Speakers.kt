@@ -10,17 +10,8 @@ import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import android.util.Log
 import com.halo.data.pleos.PleosListeners
+import com.halo.voice.Speaker
 import java.util.Locale
-
-/** 한 번에 한 문장씩 읽는다. [speak] 의 onDone 은 다 읽었거나 읽지 못했을 때 메인 스레드에서 한 번 불린다. */
-interface Speaker {
-    fun speak(text: String, onDone: () -> Unit)
-
-    /** 읽던 것을 멈춘다. 멈춘 문장의 onDone 은 부르지 않는다. */
-    fun stop()
-
-    fun release()
-}
 
 /** 소리 없이 읽는 시간만큼 기다린다 (화면 자막은 그대로 보인다) */
 internal fun readingTimeMs(text: String): Long = 800L + text.length * 110L

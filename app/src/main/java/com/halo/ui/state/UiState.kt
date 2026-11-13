@@ -3,22 +3,10 @@ package com.halo.ui.state
 import com.halo.data.FeedStatus
 import com.halo.domain.HaloSnapshot
 import com.halo.domain.Lamp
+import com.halo.voice.VoicePhase
 
 /** 실제 차량으로 보는지, 기획서의 시연 시나리오로 보는지 */
 enum class Source { LIVE, DEMO }
-
-enum class VoicePhase {
-    IDLE,
-
-    /** 읽는 중 */
-    SPEAKING,
-
-    /** 질문 뒤 대답을 듣는 중 */
-    LISTENING,
-
-    /** 음성 인식을 쓸 수 없어 화면 버튼을 기다리는 중 */
-    WAITING_TAP,
-}
 
 data class VoiceUi(
     val phase: VoicePhase = VoicePhase.IDLE,

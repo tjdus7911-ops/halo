@@ -31,11 +31,20 @@ import com.halo.ui.theme.HaloType
 import kotlin.math.max
 import kotlin.math.min
 
-/** 위험 구간의 짧은 이름: "강변 교량 · 살얼음" */
-fun hazardName(h: RouteHazard): String = when (h.kind) {
-    HazardKind.ICE -> "${h.spot.name} · 살얼음"
-    HazardKind.FOG -> "${h.spot.name} · 안개"
-    HazardKind.HEAVY_RAIN -> "${h.spot.name} · 폭우"
+/** 위험 구간의 짧은 이름: "강변 교량 · 살얼음" (이름에 이미 있으면 덧붙이지 않는다) */
+fun hazardName(h: RouteHazard): String {
+    val word = when (h.kind) {
+        HazardKind.ICE -> "살얼음"
+        HazardKind.FOG -> "안개"
+        HazardKind.HEAVY_RAIN -> "폭우"
+    }
+    return if (h.spot.name.contains(word)) h.spot.name else "${h.spot.name} · $word"
+}
+
+/** 출발점에서의 위치: 7.2km, 16km */
+fun spotPosition(km: Double): String {
+    val rounded = Math.round(km * 10) / 10.0
+    return if (rounded % 1.0 == 0.0) "${rounded.toInt()}km" else "${rounded}km"
 }
 
 /**
@@ -95,7 +104,7 @@ fun RouteStrip(
             lastEnd = lastEnd.toMutableList().also { it[row] = start + labelW + 8.dp }
             Column(Modifier.width(labelW).offset(x = start, y = trackY + 24.dp + 56.dp * row)) {
                 Text(hazardName(h), style = HaloType.Label, color = HaloColors.of(h.level), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text("${Phrases.distance(h.spot.atKm)} 지점", style = HaloType.Small, color = HaloColors.TextDim, maxLines = 1)
+                Text("${spotPosition(h.spot.atKm)} 지점", style = HaloType.Small, color = HaloColors.TextDim, maxLines = 1)
             }
         }
     }

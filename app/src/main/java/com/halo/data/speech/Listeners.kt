@@ -14,20 +14,8 @@ import android.speech.SpeechRecognizer
 import android.util.Log
 import com.halo.data.pleos.PleosListeners
 import com.halo.domain.VoiceAnswer
+import com.halo.voice.AnswerListener
 import java.util.Locale
-
-/** 질문 뒤에 운전자의 대답을 한 번 듣는다 */
-interface AnswerListener {
-    /** 지금 들을 수 있는지 */
-    val ready: Boolean
-
-    /** 들은 문장을 [onResult] 로 한 번 넘긴다 (못 알아들으면 null). 듣기 시작하지 못하면 false. */
-    fun listen(onResult: (String?) -> Unit): Boolean
-
-    fun cancel()
-
-    fun release()
-}
 
 /** Pleos SpeechToText SDK: 차량의 음성 인식 */
 class PleosAnswerListener(context: Context) : AnswerListener {
@@ -200,28 +188,4 @@ class AndroidAnswerListener(private val context: Context) : AnswerListener {
     private companion object {
         const val TAG = "AndroidStt"
     }
-}
-
-/** 차량 음성 인식을 먼저 쓰고, 없으면 기본 음성 인식을 쓴다 */
-class FirstReadyListener(private val listeners: List<AnswerListener>) : AnswerListener {
-    private var active: AnswerListener? = null
-
-    override val ready: Boolean get() = listeners.any { it.ready }
-
-    override fun listen(onResult: (String?) -> Unit): Boolean {
-        for (l in listeners) {
-            if (l.ready && l.listen(onResult)) {
-                active = l
-                return true
-            }
-        }
-        return false
-    }
-
-    override fun cancel() {
-        active?.cancel()
-        active = null
-    }
-
-    override fun release() = listeners.forEach { it.release() }
 }

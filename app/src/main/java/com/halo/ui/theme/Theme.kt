@@ -8,6 +8,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.halo.R
@@ -62,15 +63,27 @@ val Pretendard = FontFamily(
  * 기온 숫자 > 경보 제목 > 질문·패널 제목 > 본문 > 라벨 순.
  */
 object HaloType {
-    val Display = TextStyle(fontFamily = Pretendard, fontWeight = FontWeight.Bold, fontSize = 112.sp, lineHeight = 112.sp, letterSpacing = (-4).sp)
-    val Headline = TextStyle(fontFamily = Pretendard, fontWeight = FontWeight.Bold, fontSize = 46.sp, lineHeight = 56.sp, letterSpacing = (-1).sp)
-    val Title = TextStyle(fontFamily = Pretendard, fontWeight = FontWeight.Bold, fontSize = 32.sp, lineHeight = 40.sp, letterSpacing = (-0.5).sp)
-    val Subtitle = TextStyle(fontFamily = Pretendard, fontWeight = FontWeight.SemiBold, fontSize = 26.sp, lineHeight = 34.sp)
-    val Body = TextStyle(fontFamily = Pretendard, fontWeight = FontWeight.Medium, fontSize = 22.sp, lineHeight = 30.sp)
+    /** 한국어는 글자 사이가 아니라 띄어쓰기에서 줄을 바꾼다 (Android 13 이상, 그 아래는 기본 줄바꿈) */
+    private val KoreanBreak = LineBreak(LineBreak.Strategy.HighQuality, LineBreak.Strictness.Normal, LineBreak.WordBreak.Phrase)
+
+    private fun style(weight: FontWeight, size: Int, line: Int, spacing: Double = 0.0) = TextStyle(
+        fontFamily = Pretendard,
+        fontWeight = weight,
+        fontSize = size.sp,
+        lineHeight = line.sp,
+        letterSpacing = spacing.sp,
+        lineBreak = KoreanBreak,
+    )
+
+    val Display = style(FontWeight.Bold, 112, 112, -4.0)
+    val Headline = style(FontWeight.Bold, 46, 56, -1.0)
+    val Title = style(FontWeight.Bold, 32, 40, -0.5)
+    val Subtitle = style(FontWeight.SemiBold, 26, 34)
+    val Body = style(FontWeight.Medium, 22, 30)
     val BodyStrong = Body.copy(fontWeight = FontWeight.SemiBold)
-    val Label = TextStyle(fontFamily = Pretendard, fontWeight = FontWeight.Medium, fontSize = 19.sp, lineHeight = 26.sp)
-    val Small = TextStyle(fontFamily = Pretendard, fontWeight = FontWeight.Medium, fontSize = 17.sp, lineHeight = 24.sp)
-    val Button = TextStyle(fontFamily = Pretendard, fontWeight = FontWeight.Bold, fontSize = 26.sp, lineHeight = 32.sp)
+    val Label = style(FontWeight.Medium, 19, 26)
+    val Small = style(FontWeight.Medium, 17, 24)
+    val Button = style(FontWeight.Bold, 26, 32)
 }
 
 /** 간격: 8 단위 */
