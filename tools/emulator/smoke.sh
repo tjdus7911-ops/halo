@@ -20,6 +20,7 @@ shot() { adb exec-out screencap -p > "$OUT/$1.png"; }
 tap() { python3 tools/emulator/tap.py "$1" --a11y-log "$OUT/a11y.txt" || echo "not found: $1" >> "$OUT/missing.txt"; }
 # 장면이 실제로 바뀌었는지: 화면(접근성 트리)에 글자가 있는지만 본다
 expect() { python3 tools/emulator/tap.py "$1" --check --a11y-log "$OUT/a11y.txt" || echo "not on screen: $1" >> "$OUT/missing.txt"; }
+gone() { python3 tools/emulator/tap.py "$1" --gone || echo "still on screen: $1" >> "$OUT/missing.txt"; }
 
 play() {
   local name=$1
@@ -50,7 +51,8 @@ tap "처음부터"; sleep 12
 expect "1월 출근길 · 영하 4도"
 shot answer_before
 tap "이대로 갈게"
-expect "지금 길로 갈게요"
+# 답한 질문은 화면에서 바로 사라지고, 읽던 브리핑이 끝나면 확인 문장과 다음 질문으로 넘어간다
+gone "이대로 갈게"
 shot answer_after
 
 adb logcat -d > "$OUT/logcat.txt"
