@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 차량(AAOS)에서 실행하되, 일반 에뮬레이터에서도 시연 모드로 열 수 있게 required=false -->
+    <uses-feature
+        android:name="android.hardware.type.automotive"
+        android:required="false" />
+
+    <!-- AAOS 차량 속성: 외기온도 / 속도 / 기어 -->
+    <uses-permission android:name="android.car.permission.CAR_EXTERIOR_ENVIRONMENT" />
+    <uses-permission android:name="android.car.permission.CAR_SPEED" />
+    <uses-permission android:name="android.car.permission.CAR_POWERTRAIN" />
+    <!-- 태블릿·에뮬레이터 시연에서 “응 / 아니”를 기본 음성 인식으로 들을 때 -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <!-- 기본 음성 인식·음성 합성 서비스를 찾기 위해 (Android 11 이상 패키지 공개 범위) -->
+    <queries>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+    </queries>
+
+    <application
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Halo">
+
+        <uses-library
+            android:name="android.car"
+            android:required="false" />
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|density|uiMode"
+            android:theme="@style/Theme.Halo">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!-- 주행 중에도 쓰도록 설계한 화면: 한 번에 질문 하나, 음성으로 답하고 버튼은 보조 -->
+            <meta-data
+                android:name="distractionOptimized"
+                android:value="true" />
+        </activity>
+
+        <!--
+            Gleo AI(Pleos 차량 음성 비서) 음성 명령. assets/schema.json 의 함수마다 action 을 하나씩 받는다.
+            Gleo 가 다른 앱이므로 exported=true. 패키지를 지정한 브로드캐스트(component = "service")로 들어온다.
+        -->
+        <receiver
+            android:name=".gleo.GleoActionReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="CHECK_ROAD_RISK" />
+                <action android:name="START_BRIEFING" />
+                <action android:name="SET_WEATHER_MODE" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>

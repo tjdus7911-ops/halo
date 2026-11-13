@@ -1,0 +1,51 @@
+name: Screenshots
+
+# 에뮬레이터 없이 Paparazzi 로 화면을 그려 ci/screenshots 브랜치에 올립니다.
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'app/src/**'
+      - '.github/workflows/screenshots.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Record screenshots
+        run: |
+          chmod +x gradlew
+          set -o pipefail
+          ./gradlew --no-daemon :app:recordPaparazziDebug --tests "com.halo.ui.ScreensSnapshotTest" 2>&1 | tee record.log
+
+      - name: Report errors
+        if: failure()
+        run: |
+          grep -E "^e: |error:|FAILED|What went wrong|Exception" record.log | head -60 | sed 's/%/%25/g' | awk 'BEGIN{ORS="%0A"} {print}' | sed 's/^/::error title=Screenshots failed::/'
+
+      - name: Publish to ci/screenshots branch
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p out
+          cp app/src/test/snapshots/images/*ScreensSnapshotTest*.png out/
+          cd out
+          git init -q -b ci/screenshots
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Screenshots (${GITHUB_SHA::7})"
+          git push -q -f "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" ci/screenshots

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 헤일로 로고: 기울어진 고리. 108dp 캔버스의 안전 영역(가운데 66dp) 안에 그린다 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:pivotX="54"
+        android:pivotY="54"
+        android:rotation="-14">
+        <path
+            android:pathData="M26,54 A28,12.5 0 1,0 82,54 A28,12.5 0 1,0 26,54 Z"
+            android:strokeWidth="6.5"
+            android:strokeColor="#5BD8FF"
+            android:fillColor="#00000000" />
+    </group>
+</vector>
