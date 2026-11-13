@@ -43,6 +43,7 @@ import com.halo.domain.WeatherMode
 import com.halo.ui.components.HIcon
 import com.halo.ui.components.HaloButton
 import com.halo.ui.components.HaloIcons
+import com.halo.ui.components.KText
 import com.halo.ui.components.HaloMark
 import com.halo.ui.components.IconAction
 import com.halo.ui.components.ListeningBars
@@ -139,15 +140,15 @@ private fun Header(state: HaloUiState, actions: HaloActions) {
     ) {
         HaloMark(40.dp)
         Spacer(Modifier.width(12.dp))
-        Text("헤일로", style = HaloType.Title, color = HaloColors.Text)
+        KText("헤일로", style = HaloType.Title, color = HaloColors.Text)
         Spacer(Modifier.width(HaloSpace.m))
         Box(Modifier.width(1.dp).height(24.dp).background(HaloColors.Line))
         Spacer(Modifier.width(HaloSpace.m))
-        Text(contextLabel(state), style = HaloType.Body, color = HaloColors.TextDim, maxLines = 1)
+        KText(contextLabel(state), style = HaloType.Body, color = HaloColors.TextDim, maxLines = 1)
         if (state.source == Source.DEMO) {
             state.snapshot?.clock?.let { clock ->
                 Spacer(Modifier.width(HaloSpace.m))
-                Text(clock, style = HaloType.Body, color = HaloColors.TextMute)
+                KText(clock, style = HaloType.Body, color = HaloColors.TextMute)
             }
         }
         Spacer(Modifier.weight(1f))
@@ -211,7 +212,7 @@ private fun VoiceBar(state: HaloUiState, actions: HaloActions) {
         Spacer(Modifier.width(HaloSpace.m))
         Column(Modifier.weight(1f)) {
             voiceHint(voice, question, snap)?.let { hint ->
-                Text(hint, style = HaloType.Small, color = if (voice.phase == VoicePhase.LISTENING) HaloColors.Ice else HaloColors.TextDim, maxLines = 1)
+                KText(hint, style = HaloType.Small, color = if (voice.phase == VoicePhase.LISTENING) HaloColors.Ice else HaloColors.TextDim, maxLines = 1)
             }
             val caption = voice.caption
             val line = when {
@@ -219,7 +220,7 @@ private fun VoiceBar(state: HaloUiState, actions: HaloActions) {
                 caption != null -> caption
                 else -> idleLine(snap)
             }
-            Text(
+            KText(
                 line,
                 style = HaloType.Subtitle,
                 color = if (question != null || caption != null) HaloColors.Text else HaloColors.TextDim,
@@ -275,14 +276,14 @@ private fun StatusMessage(state: HaloUiState, actions: HaloActions) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 CircularProgressIndicator(color = HaloColors.Ice, strokeWidth = 3.dp, modifier = Modifier.size(32.dp))
                 Spacer(Modifier.width(HaloSpace.m))
-                Text("차량에 연결하는 중이에요", style = HaloType.Title, color = HaloColors.Text)
+                KText("차량에 연결하는 중이에요", style = HaloType.Title, color = HaloColors.Text)
             }
             Spacer(Modifier.height(HaloSpace.m))
-            Text("외기온도·와이퍼·등화 상태를 받는 대로 오늘 길을 알려 드릴게요.", style = HaloType.Body, color = HaloColors.TextDim)
+            KText("외기온도·와이퍼·등화 상태를 받는 대로 오늘 길을 알려 드릴게요.", style = HaloType.Body, color = HaloColors.TextDim)
         } else {
-            Text("차량 데이터를 받을 수 없어요", style = HaloType.Headline, color = HaloColors.Text)
+            KText("차량 데이터를 받을 수 없어요", style = HaloType.Headline, color = HaloColors.Text)
             Spacer(Modifier.height(HaloSpace.m))
-            Text(
+            KText(
                 if (state.isAutomotive) "차량 서비스 연결과 앱 권한(속도·외기온도)을 확인해 주세요. 연결되면 바로 시작해요."
                 else "이 기기는 차량이 아니에요. 기획서의 장면을 시연 시나리오로 볼 수 있어요.",
                 style = HaloType.Body,
@@ -307,7 +308,7 @@ private fun DemoBar(demo: DemoUi, actions: HaloActions) {
             .padding(horizontal = HaloSpace.xl),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text("시연", style = HaloType.Label.copy(fontWeight = FontWeight.Bold), color = HaloColors.Ice)
+        KText("시연", style = HaloType.Label.copy(fontWeight = FontWeight.Bold), color = HaloColors.Ice)
         Spacer(Modifier.width(HaloSpace.m))
         Text(
             buildAnnotatedString {
@@ -332,7 +333,7 @@ private fun DemoBar(demo: DemoUi, actions: HaloActions) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 HIcon(HaloIcons.Restart, HaloColors.TextDim, 22.dp)
                 Spacer(Modifier.width(6.dp))
-                Text("처음부터", style = HaloType.Label, color = HaloColors.TextDim)
+                KText("처음부터", style = HaloType.Label, color = HaloColors.TextDim)
             }
         }
         Spacer(Modifier.width(HaloSpace.s))

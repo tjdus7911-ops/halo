@@ -29,6 +29,7 @@ import com.halo.domain.SpotKind
 import com.halo.ui.components.HIcon
 import com.halo.ui.components.HairlineV
 import com.halo.ui.components.HaloIcons
+import com.halo.ui.components.KText
 import com.halo.ui.components.LevelTag
 import com.halo.ui.components.RoadAhead
 import com.halo.ui.components.SectionLabel
@@ -73,12 +74,12 @@ private fun AlertBlock(snap: HaloSnapshot) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             LevelTag(h.level, large = true)
             Spacer(Modifier.width(HaloSpace.m))
-            Text(sourceLine(h), style = HaloType.Body, color = HaloColors.TextDim, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            KText(sourceLine(h), style = HaloType.Body, color = HaloColors.TextDim, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         Spacer(Modifier.height(HaloSpace.m))
-        Text(Phrases.alertTitle(h, d), style = HaloType.Headline, color = HaloColors.Text)
+        KText(Phrases.alertTitle(h, d), style = HaloType.Headline, color = HaloColors.Text)
         Spacer(Modifier.height(HaloSpace.s))
-        Text(Phrases.alertAdvice(h), style = HaloType.Body, color = HaloColors.TextDim)
+        KText(Phrases.alertAdvice(h), style = HaloType.Body, color = HaloColors.TextDim)
         return
     }
     val next = snap.ahead.firstOrNull { it.hazard.level != RiskLevel.WATCH } ?: snap.ahead.firstOrNull()
@@ -89,27 +90,27 @@ private fun AlertBlock(snap: HaloSnapshot) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 LevelTag(next.hazard.level)
                 Spacer(Modifier.width(12.dp))
-                Text(sourceLine(next.hazard), style = HaloType.Label, color = HaloColors.TextDim, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                KText(sourceLine(next.hazard), style = HaloType.Label, color = HaloColors.TextDim, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             Spacer(Modifier.height(HaloSpace.s))
-            Text(Phrases.alertTitle(next.hazard, next.distanceKm), style = HaloType.Title, color = HaloColors.Text)
+            KText(Phrases.alertTitle(next.hazard, next.distanceKm), style = HaloType.Title, color = HaloColors.Text)
             Spacer(Modifier.height(HaloSpace.xs))
             val km = AlertPlanner.firstAlertKm(snap.settings.careful)
-            Text(
+            KText(
                 if (next.hazard.level == RiskLevel.WATCH) "관심 단계는 화면으로만 알려 드려요" else "${Phrases.distance(km)} 앞에서 말로 알려 드릴게요",
                 style = HaloType.Body,
                 color = HaloColors.TextDim,
             )
         }
         snap.routeKnown -> {
-            Text("남은 길에 위험 구간이 없어요", style = HaloType.Title, color = HaloColors.Text)
+            KText("남은 길에 위험 구간이 없어요", style = HaloType.Title, color = HaloColors.Text)
             Spacer(Modifier.height(HaloSpace.s))
-            Text("날씨가 바뀌면 바로 알려 드릴게요.", style = HaloType.Body, color = HaloColors.TextDim)
+            KText("날씨가 바뀌면 바로 알려 드릴게요.", style = HaloType.Body, color = HaloColors.TextDim)
         }
         else -> {
-            Text("차량 센서로 보고 있어요", style = HaloType.Title, color = HaloColors.Text)
+            KText("차량 센서로 보고 있어요", style = HaloType.Title, color = HaloColors.Text)
             Spacer(Modifier.height(HaloSpace.s))
-            Text(
+            KText(
                 "경로 날씨 정보 없이 외기온도와 와이퍼로 판단해요. 기온이 빠르게 떨어지면 다리 위·터널 출구를 조심하라고 알려 드릴게요.",
                 style = HaloType.Body,
                 color = HaloColors.TextDim,
@@ -145,7 +146,7 @@ private fun Fact(icon: ImageVector, text: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         HIcon(icon, HaloColors.TextDim, 24.dp)
         Spacer(Modifier.width(10.dp))
-        Text(text, style = HaloType.BodyStrong, color = HaloColors.TextDim, maxLines = 1)
+        KText(text, style = HaloType.BodyStrong, color = HaloColors.TextDim, maxLines = 1)
     }
 }
 
@@ -156,9 +157,9 @@ fun ArrivedBody(snap: HaloSnapshot, guide: GuideNote?) {
         Column(Modifier.weight(1f).fillMaxHeight().padding(top = HaloSpace.m)) {
             SectionLabel("도착 ${snap.clock}")
             Spacer(Modifier.height(HaloSpace.s))
-            Text("도착했어요", style = HaloType.Headline, color = HaloColors.Text)
+            KText("도착했어요", style = HaloType.Headline, color = HaloColors.Text)
             Spacer(Modifier.height(HaloSpace.s))
-            Text(
+            KText(
                 if (snap.activeMode != null) "켜 둔 ${snap.activeMode.mode.label}를 정리할게요." else "다음 운행 때 다시 브리핑할게요.",
                 style = HaloType.Body,
                 color = HaloColors.TextDim,

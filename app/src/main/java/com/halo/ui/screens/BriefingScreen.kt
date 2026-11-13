@@ -38,6 +38,7 @@ import com.halo.ui.components.HIcon
 import com.halo.ui.components.HairlineH
 import com.halo.ui.components.HairlineV
 import com.halo.ui.components.HaloIcons
+import com.halo.ui.components.KText
 import com.halo.ui.components.InfoRow
 import com.halo.ui.components.LevelTag
 import com.halo.ui.components.RouteStrip
@@ -101,11 +102,11 @@ private fun WeatherColumn(snap: HaloSnapshot, b: Briefing?, modifier: Modifier) 
                 maxLines = 1,
             )
         } else {
-            Text("—", style = HaloType.Display, color = HaloColors.TextMute)
-            Text("외기온도를 받지 못했어요", style = HaloType.Body, color = HaloColors.TextDim)
+            KText("—", style = HaloType.Display, color = HaloColors.TextMute)
+            KText("외기온도를 받지 못했어요", style = HaloType.Body, color = HaloColors.TextDim)
         }
         if (snap.routeKnown) {
-            Text(
+            KText(
                 "최저 ${RiskEngine.celsius(w.minTempTodayC)} · 최고 ${RiskEngine.celsius(w.maxTempTodayC)}",
                 style = HaloType.Body,
                 color = HaloColors.TextDim,
@@ -140,7 +141,7 @@ private fun Note(icon: ImageVector, text: String, color: Color) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         HIcon(icon, color, 26.dp)
         Spacer(Modifier.width(12.dp))
-        Text(text, style = HaloType.BodyStrong, color = color, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        KText(text, style = HaloType.BodyStrong, color = color, maxLines = 2, overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -160,9 +161,9 @@ private fun RouteColumn(snap: HaloSnapshot, b: Briefing?, modifier: Modifier) {
         SectionLabel(if (remain != null) "오늘 경로 · 평소 ${remain}분" else "오늘 경로")
         Spacer(Modifier.height(HaloSpace.m))
         if (!snap.routeKnown && hazards.isEmpty()) {
-            Text("경로 날씨 정보 없음", style = HaloType.Title, color = HaloColors.Text)
+            KText("경로 날씨 정보 없음", style = HaloType.Title, color = HaloColors.Text)
             Spacer(Modifier.height(HaloSpace.s))
-            Text(
+            KText(
                 "내비의 미끄럼 주의 지점과 차량 외기온도로 판단해요. 기온이 빠르게 떨어지면 바로 알려 드릴게요.",
                 style = HaloType.Body,
                 color = HaloColors.TextDim,
@@ -186,7 +187,7 @@ private fun RouteColumn(snap: HaloSnapshot, b: Briefing?, modifier: Modifier) {
 private fun RouteHeadline(hazards: List<RouteHazard>) {
     val serious = hazards.filter { it.level != RiskLevel.WATCH }
     if (serious.isEmpty()) {
-        Text("경로에 위험 구간이 없어요", style = HaloType.Title, color = HaloColors.Text)
+        KText("경로에 위험 구간이 없어요", style = HaloType.Title, color = HaloColors.Text)
         return
     }
     val top = serious.maxBy { it.level.ordinal }
@@ -197,10 +198,10 @@ private fun RouteHeadline(hazards: List<RouteHazard>) {
     }
     val count = serious.count { it.kind == top.kind }
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Text("$kind ${top.level.label} ", style = HaloType.Title, color = HaloColors.Text)
-        Text("${count}곳", style = HaloType.Title, color = HaloColors.of(top.level))
+        KText("$kind ${top.level.label} ", style = HaloType.Title, color = HaloColors.Text)
+        KText("${count}곳", style = HaloType.Title, color = HaloColors.of(top.level))
         val others = serious.size - count
-        if (others > 0) Text("  외 ${others}곳", style = HaloType.Subtitle, color = HaloColors.TextDim)
+        if (others > 0) KText("  외 ${others}곳", style = HaloType.Subtitle, color = HaloColors.TextDim)
     }
 }
 
@@ -210,9 +211,9 @@ private fun ArrivalLine(snap: HaloSnapshot) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         HIcon(HaloIcons.Clock, HaloColors.TextDim, 26.dp)
         Spacer(Modifier.width(12.dp))
-        Text(if (snap.delayMin > 0) "천천히 가면 도착 $arrival " else "도착 $arrival", style = HaloType.BodyStrong, color = HaloColors.Text)
-        if (snap.delayMin > 0) Text("(+${snap.delayMin}분)", style = HaloType.BodyStrong, color = HaloColors.Caution)
-        if (snap.detourTaken) Text("  · 우회 경로", style = HaloType.Body, color = HaloColors.TextDim)
+        KText(if (snap.delayMin > 0) "천천히 가면 도착 $arrival " else "도착 $arrival", style = HaloType.BodyStrong, color = HaloColors.Text)
+        if (snap.delayMin > 0) KText("(+${snap.delayMin}분)", style = HaloType.BodyStrong, color = HaloColors.Caution)
+        if (snap.detourTaken) KText("  · 우회 경로", style = HaloType.Body, color = HaloColors.TextDim)
     }
 }
 
@@ -224,7 +225,7 @@ private fun ChecksColumn(checks: List<CheckItem>, modifier: Modifier) {
         SectionLabel("오늘의 악천후 차 상태")
         Spacer(Modifier.height(HaloSpace.s))
         if (checks.isEmpty()) {
-            Text("차량에서 받은 점검 항목이 없어요", style = HaloType.Body, color = HaloColors.TextDim, modifier = Modifier.padding(top = HaloSpace.s))
+            KText("차량에서 받은 점검 항목이 없어요", style = HaloType.Body, color = HaloColors.TextDim, modifier = Modifier.padding(top = HaloSpace.s))
             return@Column
         }
         checks.forEachIndexed { i, c ->
@@ -239,7 +240,7 @@ private fun ChecksColumn(checks: List<CheckItem>, modifier: Modifier) {
         }
         Spacer(Modifier.weight(1f))
         checks.firstOrNull { it.level == CheckLevel.WARN && it.note != null }?.let {
-            Text(it.note!!, style = HaloType.Small, color = HaloColors.TextDim, modifier = Modifier.fillMaxWidth())
+            KText(it.note!!, style = HaloType.Small, color = HaloColors.TextDim, modifier = Modifier.fillMaxWidth())
         }
     }
 }

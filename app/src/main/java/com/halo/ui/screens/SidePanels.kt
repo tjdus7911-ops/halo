@@ -50,6 +50,8 @@ import com.halo.domain.WiperMode
 import com.halo.ui.components.HIcon
 import com.halo.ui.components.HairlineH
 import com.halo.ui.components.HaloIcons
+import com.halo.ui.components.KText
+import com.halo.ui.components.keepWords
 import com.halo.ui.components.InfoRow
 import com.halo.ui.components.SectionLabel
 import com.halo.ui.components.spotPosition
@@ -106,8 +108,8 @@ private fun DetailHeader(icon: ImageVector, title: String, subtitle: String?, ti
         }
         Spacer(Modifier.width(HaloSpace.m))
         Column {
-            Text(title, style = HaloType.Title, color = HaloColors.Text, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            if (subtitle != null) Text(subtitle, style = HaloType.Body, color = HaloColors.TextDim, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            KText(title, style = HaloType.Title, color = HaloColors.Text, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (subtitle != null) KText(subtitle, style = HaloType.Body, color = HaloColors.TextDim, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
     }
     Spacer(Modifier.height(HaloSpace.l))
@@ -134,11 +136,11 @@ private fun ModeOnDetail(p: ModeProposal) {
     DetailHeader(modeIcon(p.mode), "${p.mode.label} 켤까요?", p.evidence.joinToString(" · ").ifEmpty { null })
     Text(
         buildAnnotatedString {
-            append("자동으로 도는 기능은 ")
-            withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = HaloColors.Text)) { append("그대로 두고") }
-            append(", 자동이 아닌 ")
-            withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = HaloColors.Text)) { append("${p.turnOn.size}가지만") }
-            append(" 켤게요")
+            append(keepWords("자동으로 도는 기능은 "))
+            withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = HaloColors.Text)) { append(keepWords("그대로 두고")) }
+            append(keepWords(", 자동이 아닌 "))
+            withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = HaloColors.Text)) { append(keepWords("${p.turnOn.size}가지만")) }
+            append(keepWords(" 켤게요"))
         },
         style = HaloType.Body,
         color = HaloColors.TextDim,
@@ -203,7 +205,7 @@ private fun LampDetail(lamp: Lamp, on: Boolean, snap: HaloSnapshot) {
         Lamp.HAZARD -> false
     }
     Spacer(Modifier.height(HaloSpace.m))
-    Text(
+    KText(
         when {
             controllable -> "“응” 하면 바로 ${if (on) "켤게요" else "끌게요"}."
             lamp == Lamp.HAZARD -> "비상등은 앱에서 켤 수 없어 버튼 위치를 알려 드릴게요."
@@ -222,7 +224,7 @@ private fun RouteDetail(d: Detour, snap: HaloSnapshot) {
         HairlineH()
     }
     Spacer(Modifier.height(HaloSpace.m))
-    Text("지금 길로 가도 위험한 곳은 미리 알려 드려요.", style = HaloType.Small, color = HaloColors.TextDim)
+    KText("지금 길로 가도 위험한 곳은 미리 알려 드려요.", style = HaloType.Small, color = HaloColors.TextDim)
 }
 
 @Composable
@@ -249,10 +251,10 @@ fun GuidePanel(guide: GuideNote) {
             if (guide.lamp == Lamp.HAZARD) "비상등은 앱에서 바꿀 수 없어요" else "이 차는 앱에서 바꿀 수 없어요",
             HaloColors.Caution,
         )
-        Text(guide.text, style = HaloType.Subtitle, color = HaloColors.Text)
+        KText(guide.text, style = HaloType.Subtitle, color = HaloColors.Text)
         if (guide.lamp != Lamp.HAZARD) {
             Spacer(Modifier.height(HaloSpace.m))
-            Text("${if (guide.on) "켜지면" else "꺼지면"} 알려 드릴게요.", style = HaloType.Body, color = HaloColors.TextDim)
+            KText("${if (guide.on) "켜지면" else "꺼지면"} 알려 드릴게요.", style = HaloType.Body, color = HaloColors.TextDim)
         }
     }
 }
@@ -289,7 +291,7 @@ fun LevelScale(level: RiskLevel) {
                     .then(if (on) Modifier.border(2.dp, color, RoundedCornerShape(HaloSpace.radiusSmall)) else Modifier),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(l.label, style = HaloType.BodyStrong, color = if (on) color else HaloColors.TextMute)
+                KText(l.label, style = HaloType.BodyStrong, color = if (on) color else HaloColors.TextMute)
             }
         }
     }
@@ -323,9 +325,9 @@ fun ModePanel(mode: ActiveMode, snap: HaloSnapshot) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             HIcon(modeIcon(mode.mode), HaloColors.Ice, 34.dp)
             Spacer(Modifier.width(12.dp))
-            Text("${mode.mode.label} 켜짐", style = HaloType.Title, color = HaloColors.Ice)
+            KText("${mode.mode.label} 켜짐", style = HaloType.Title, color = HaloColors.Ice)
         }
-        Text("자동 기능은 그대로, 빈 곳만 채웠어요", style = HaloType.Body, color = HaloColors.TextDim)
+        KText("자동 기능은 그대로, 빈 곳만 채웠어요", style = HaloType.Body, color = HaloColors.TextDim)
         Spacer(Modifier.height(HaloSpace.m))
         mode.kept.forEach {
             InfoRow(keptIcon(it), it.label, "자동 작동 중", HaloColors.Ice)

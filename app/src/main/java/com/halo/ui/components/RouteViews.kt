@@ -86,8 +86,8 @@ fun RouteStrip(
             if (progressKm > 0.0) drawCircle(HaloColors.Ice, radius = 9.dp.toPx(), center = Offset(x(progressKm).toPx(), y))
         }
 
-        Text("출발", style = HaloType.Small, color = HaloColors.TextMute, modifier = Modifier.offset(x = pad - 6.dp, y = 0.dp))
-        Text(
+        KText("출발", style = HaloType.Small, color = HaloColors.TextMute, modifier = Modifier.offset(x = pad - 6.dp, y = 0.dp))
+        KText(
             endLabel ?: "도착",
             style = HaloType.Small,
             color = HaloColors.TextDim,
@@ -103,8 +103,8 @@ fun RouteStrip(
             val row = if (start >= lastEnd[0]) 0 else if (start >= lastEnd[1]) 1 else 0
             lastEnd = lastEnd.toMutableList().also { it[row] = start + labelW + 8.dp }
             Column(Modifier.width(labelW).offset(x = start, y = trackY + 24.dp + 56.dp * row)) {
-                Text(hazardName(h), style = HaloType.Label, color = HaloColors.of(h.level), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text("${spotPosition(h.spot.atKm)} 지점", style = HaloType.Small, color = HaloColors.TextDim, maxLines = 1)
+                KText(hazardName(h), style = HaloType.Label, color = HaloColors.of(h.level), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                KText("${spotPosition(h.spot.atKm)} 지점", style = HaloType.Small, color = HaloColors.TextDim, maxLines = 1)
             }
         }
     }
@@ -180,7 +180,7 @@ fun RoadAhead(ahead: List<HazardAhead>, progressKm: Double, modifier: Modifier =
         // 눈금 글씨 (길 왼쪽)
         var km = step
         while (km < range - 0.05) {
-            Text(
+            KText(
                 Phrases.distance(km),
                 style = HaloType.Small,
                 color = HaloColors.TextMute,
@@ -194,19 +194,19 @@ fun RoadAhead(ahead: List<HazardAhead>, progressKm: Double, modifier: Modifier =
         val labelX = roadX + bandW / 2 + 16.dp
         ahead.filter { it.distanceKm < range }.take(3).forEach { a ->
             Column(Modifier.width(maxWidth - labelX).offset(x = labelX, y = y(a.distanceKm) - 30.dp)) {
-                Text(
+                KText(
                     if (a.distanceKm <= 0.05) "지금 구간 안" else Phrases.distance(a.distanceKm),
                     style = HaloType.Subtitle,
                     color = HaloColors.Text,
                     maxLines = 1,
                 )
-                Text(hazardName(a.hazard), style = HaloType.Label, color = HaloColors.of(a.hazard.level), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                KText(hazardName(a.hazard), style = HaloType.Label, color = HaloColors.of(a.hazard.level), maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
         val beyond = ahead.firstOrNull { it.distanceKm >= range }
         if (nearest == null || beyond != null && ahead.none { it.distanceKm < range }) {
             Box(Modifier.width(maxWidth - labelX).offset(x = labelX, y = topY - 14.dp)) {
-                Text(
+                KText(
                     if (beyond != null) "다음 위험 ${Phrases.distance(beyond.distanceKm)} 앞" else "앞 ${Phrases.distance(range)} 위험 없음",
                     style = HaloType.Label,
                     color = HaloColors.TextDim,

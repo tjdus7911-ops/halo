@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import com.halo.demo.DemoScenarios
 import com.halo.ui.components.HairlineH
 import com.halo.ui.components.HaloIcons
+import com.halo.ui.components.KText
 import com.halo.ui.components.IconAction
 import com.halo.ui.components.SectionLabel
 import com.halo.ui.state.HaloUiState
@@ -68,7 +69,7 @@ fun SettingsPanel(state: HaloUiState, actions: HaloActions) {
                 .padding(horizontal = HaloSpace.xl, vertical = HaloSpace.l),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("설정", style = HaloType.Title, color = HaloColors.Text, modifier = Modifier.weight(1f))
+                KText("설정", style = HaloType.Title, color = HaloColors.Text, modifier = Modifier.weight(1f))
                 IconAction(HaloIcons.Close, "설정 닫기", onClick = { actions.openSettings(false) })
             }
             Spacer(Modifier.height(HaloSpace.l))
@@ -84,9 +85,9 @@ fun SettingsPanel(state: HaloUiState, actions: HaloActions) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(Modifier.weight(1f)) {
-                    Text("꼼꼼히 안내", style = HaloType.Subtitle, color = HaloColors.Text)
+                    KText("꼼꼼히 안내", style = HaloType.Subtitle, color = HaloColors.Text)
                     Spacer(Modifier.height(4.dp))
-                    Text(
+                    KText(
                         "위험 구간을 1.5km 전부터 이유와 함께 알려요. 대답을 못 들으면 안전한 때 한 번 더 물어요. 처음 운전하거나 밤·새벽 운전이 낯설 때 좋아요.",
                         style = HaloType.Small,
                         color = HaloColors.TextDim,
@@ -128,14 +129,14 @@ fun SettingsPanel(state: HaloUiState, actions: HaloActions) {
 
             SectionLabel("음성")
             Spacer(Modifier.height(HaloSpace.s))
-            Text(
+            KText(
                 if (state.voice.canListen) "질문 뒤에 “응” 또는 “아니”라고 말하면 돼요. 화면 버튼으로도 답할 수 있어요."
                 else "지금은 음성 인식을 쓸 수 없어요. 질문은 읽어 드리고, 답은 화면 버튼으로 받아요.",
                 style = HaloType.Body,
                 color = HaloColors.TextDim,
             )
             Spacer(Modifier.height(HaloSpace.s))
-            Text(
+            KText(
                 "대답이 없으면 아무것도 바꾸지 않아요. Gleo에게 ‘헤일로, 눈 모드 켜 줘’처럼 말해도 돼요.",
                 style = HaloType.Small,
                 color = HaloColors.TextMute,
@@ -150,13 +151,13 @@ fun SettingsPanel(state: HaloUiState, actions: HaloActions) {
                         .padding(horizontal = HaloSpace.s),
                     contentAlignment = Alignment.CenterStart,
                 ) {
-                    Text("오늘 길 브리핑 다시 듣기", style = HaloType.BodyStrong, color = HaloColors.Ice)
+                    KText("오늘 길 브리핑 다시 듣기", style = HaloType.BodyStrong, color = HaloColors.Ice)
                 }
             }
             HairlineH(Modifier.padding(vertical = HaloSpace.m))
 
-            Text("글꼴: Pretendard (SIL Open Font License 1.1)", style = HaloType.Small, color = HaloColors.TextMute)
-            Text("시연 시나리오의 기상·도로 값은 예시예요.", style = HaloType.Small, color = HaloColors.TextMute)
+            KText("글꼴: Pretendard (SIL Open Font License 1.1)", style = HaloType.Small, color = HaloColors.TextMute)
+            KText("시연 시나리오의 기상·도로 값은 예시예요.", style = HaloType.Small, color = HaloColors.TextMute)
         }
     }
 }
@@ -183,8 +184,8 @@ private fun Choice(title: String, note: String, selected: Boolean, onClick: () -
             if (selected) Box(Modifier.size(12.dp).clip(CircleShape).background(HaloColors.Ice))
         }
         Column(Modifier.weight(1f)) {
-            Text(title, style = HaloType.Body, color = if (selected) HaloColors.Text else HaloColors.TextDim)
-            Text(note, style = HaloType.Small, color = HaloColors.TextMute)
+            KText(title, style = HaloType.Body, color = if (selected) HaloColors.Text else HaloColors.TextDim)
+            KText(note, style = HaloType.Small, color = HaloColors.TextMute)
         }
     }
 }

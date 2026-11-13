@@ -41,6 +41,7 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -82,14 +83,14 @@ fun LevelTag(level: RiskLevel, large: Boolean = false) {
             .background(color.copy(alpha = 0.16f))
             .padding(horizontal = if (large) 14.dp else 10.dp, vertical = if (large) 5.dp else 3.dp),
     ) {
-        Text(level.label, style = if (large) HaloType.Subtitle else HaloType.Label, color = color)
+        KText(level.label, style = if (large) HaloType.Subtitle else HaloType.Label, color = color)
     }
 }
 
 /** 칸 위의 작은 제목 */
 @Composable
 fun SectionLabel(text: String, modifier: Modifier = Modifier) {
-    Text(text, style = HaloType.Label, color = HaloColors.TextDim, modifier = modifier, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    KText(text, style = HaloType.Label, color = HaloColors.TextDim, modifier = modifier, maxLines = 1, overflow = TextOverflow.Ellipsis)
 }
 
 /** 아이콘 · 이름 · 값 한 줄 (값은 상태 색) */
@@ -115,12 +116,12 @@ fun InfoRow(
             Box(Modifier.width(HaloSpace.m))
         }
         Column(Modifier.weight(1f)) {
-            Text(label, style = HaloType.Body, color = HaloColors.Text, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            if (note != null) Text(note, style = HaloType.Small, color = HaloColors.TextDim, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            KText(label, style = HaloType.Body, color = HaloColors.Text, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (note != null) KText(note, style = HaloType.Small, color = HaloColors.TextDim, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
         if (value != null) {
             Box(Modifier.width(HaloSpace.m))
-            Text(value, style = HaloType.BodyStrong, color = valueColor, maxLines = 1)
+            KText(value, style = HaloType.BodyStrong, color = valueColor, maxLines = 1)
         }
     }
 }
@@ -182,7 +183,7 @@ fun HaloButton(
             HIcon(icon, fg, 28.dp)
             Box(Modifier.width(10.dp))
         }
-        Text(text, style = textStyle, color = fg, maxLines = 1)
+        KText(text, style = textStyle, color = fg, maxLines = 1)
     }
 }
 
@@ -235,7 +236,7 @@ fun StatusItem(icon: ImageVector, text: String, color: Color) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         HIcon(icon, color, 24.dp)
         Box(Modifier.width(8.dp))
-        Text(text, style = HaloType.Label, color = color, maxLines = 1)
+        KText(text, style = HaloType.Label, color = color, maxLines = 1)
     }
 }
 
@@ -253,6 +254,38 @@ fun Chip(text: String, icon: ImageVector? = null, color: Color = HaloColors.Text
             HIcon(icon, color, 20.dp)
             Box(Modifier.width(6.dp))
         }
-        Text(text, style = HaloType.Label, color = color, maxLines = 1)
+        KText(text, style = HaloType.Label, color = color, maxLines = 1)
     }
+}
+
+/**
+ * 한국어 낱말 안에서 줄이 바뀌지 않게 한다: 띄어쓰기가 아닌 한글 글자 사이에 줄바꿈 금지 문자(U+2060)를 넣는다.
+ * 화면 표시에만 쓴다 (음성으로 읽는 문장에는 넣지 않는다).
+ */
+fun keepWords(text: String): String {
+    if (text.length < 2) return text
+    val sb = StringBuilder(text.length * 2)
+    for (i in text.indices) {
+        val c = text[i]
+        sb.append(c)
+        val next = text.getOrNull(i + 1) ?: break
+        if (!c.isWhitespace() && !next.isWhitespace() && (c.isHangul() || next.isHangul())) sb.append('⁠')
+    }
+    return sb.toString()
+}
+
+private fun Char.isHangul(): Boolean = this in '가'..'힣'
+
+/** 한국어 문장: 낱말 단위로 줄을 바꾼다 */
+@Composable
+fun KText(
+    text: String,
+    style: TextStyle,
+    color: Color,
+    modifier: Modifier = Modifier,
+    maxLines: Int = Int.MAX_VALUE,
+    overflow: TextOverflow = TextOverflow.Clip,
+    textAlign: TextAlign? = null,
+) {
+    Text(keepWords(text), modifier = modifier, color = color, style = style, maxLines = maxLines, overflow = overflow, textAlign = textAlign)
 }
