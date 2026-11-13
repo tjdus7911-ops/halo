@@ -1,0 +1,53 @@
+{
+  "packageName": "com.halo.app",
+  "appDescription": "A bad-weather driving guardian that watches the road weather and the car's sensors, asks the driver one short question at a time, and acts on a spoken yes.",
+  "invokeWord": "헤일로",
+  "version": "0.1.0",
+  "actionCalls": [
+    {
+      "type": "function",
+      "function": {
+        "name": "CHECK_ROAD_RISK",
+        "description": "Tell the driver again which spots on the current route may be icy, foggy or flooded with heavy rain, and how far away they are.",
+        "parameters": {
+          "type": "object",
+          "properties": {},
+          "required": []
+        },
+        "component": "service"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "START_BRIEFING",
+        "description": "Read the short weather briefing for today's drive: outside temperature, risky spots on the route, delay from slowing down, and car items to check.",
+        "parameters": {
+          "type": "object",
+          "properties": {},
+          "required": []
+        },
+        "component": "service"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "SET_WEATHER_MODE",
+        "description": "Turn the snow mode or rain mode on, or turn the active weather mode off. Snow and rain mode switch on only the heaters that the car does not run automatically.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "description": "SNOW to turn snow mode on, RAIN to turn rain mode on, OFF to turn the active weather mode off and restore the previous settings.",
+              "enum": ["SNOW", "RAIN", "OFF"]
+            }
+          },
+          "required": ["mode"]
+        },
+        "component": "service"
+      }
+    }
+  ]
+}
