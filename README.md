@@ -47,8 +47,11 @@ app/src/main/java/com/halo
 
 ## 빌드
 
-GitHub Actions(`.github/workflows/android.yml`)가 푸시마다 단위 테스트를 돌리고 디버그 APK를 만듭니다.
-`v*` 태그를 올리면 릴리스에 APK가 붙습니다.
+GitHub Actions(`.github/workflows/android.yml`)가 푸시마다 단위 테스트를 돌리고 디버그 APK를 만듭니다
+(Actions → Android CI → Artifacts `halo-debug-apk`). `v*` 태그를 올리면 릴리스에 APK가 붙습니다.
+
+화면은 Screenshots 워크플로가 주요 장면 13개(브리핑 · 레이더 · 비/눈 모드 · 등화 · 도착 · 대답 없음 · 설정 · 연결 상태)를
+에뮬레이터 없이 그려 `ci/screenshots` 브랜치에 올립니다.
 
 로컬에서는 JDK 17과 Android SDK(compileSdk 35)가 있으면 됩니다.
 
